@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +45,16 @@ public class AccountsController {
         Properties properties = new Properties(accountsConfig.getMsg(), accountsConfig.getBuildVersion(),
                 accountsConfig.getMailDetails(), accountsConfig.getActiveBranches());
         return ow.writeValueAsString(properties);
+    }
+
+    @GetMapping("/sayHello")
+    @RateLimiter(name = "sayHello", fallbackMethod = "sayHelloFallback")
+    public String sayHello() {
+        return "Hello ! ";
+    }
+
+    private String sayHelloFallback(Throwable t) {
+        return "Hi !";
     }
 
     @PostMapping("/myCustomerDetails")
