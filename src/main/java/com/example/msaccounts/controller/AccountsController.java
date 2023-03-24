@@ -8,6 +8,7 @@ import com.example.msaccounts.repository.AccountRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,11 +46,19 @@ public class AccountsController {
     }
 
     @PostMapping("/myCustomerDetails")
+    @CircuitBreaker(name = "detailsForCustomerSupport", fallbackMethod = "myCustomerDetailsFallback")
     public CustomerDetails myCustomerDetails(@RequestBody Customer customer) {
         Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
         List<Loans> loans = loansFeignClient.getLoansDetails(customer);
         List<Cards> cards = cardsFeignClient.getCardDetails(customer);
 
         return new CustomerDetails(account, loans, cards);
+    }
+
+    private CustomerDetails myCustomerDetailsFallback(Customer customer, Throwable t) {
+        Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
+        List<Loans> loans = loansFeignClient.getLoansDetails(customer);
+
+        return new CustomerDetails(account, loans, List.of());
     }
 }
