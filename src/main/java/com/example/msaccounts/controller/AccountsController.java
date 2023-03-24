@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,7 +47,8 @@ public class AccountsController {
     }
 
     @PostMapping("/myCustomerDetails")
-    @CircuitBreaker(name = "detailsForCustomerSupport", fallbackMethod = "myCustomerDetailsFallback")
+//    @CircuitBreaker(name = "detailsForCustomerSupport", fallbackMethod = "myCustomerDetailsFallback")
+    @Retry(name = "retryForCustomerDetails", fallbackMethod = "myCustomerDetailsFallback")
     public CustomerDetails myCustomerDetails(@RequestBody Customer customer) {
         Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
         List<Loans> loans = loansFeignClient.getLoansDetails(customer);
