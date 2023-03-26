@@ -6,6 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
@@ -13,5 +14,5 @@ import java.util.List;
 public interface LoansFeignClient {
 
     @PostMapping(value = "/myLoans", consumes = MediaType.APPLICATION_JSON_VALUE)
-    List<Loans> getLoansDetails(@RequestBody Customer customer);
+    List<Loans> getLoansDetails(@RequestHeader("tmx-correlation-id") String correlationId, @RequestBody Customer customer);
 }

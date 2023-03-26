@@ -10,10 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -59,17 +56,17 @@ public class AccountsController {
     @PostMapping("/myCustomerDetails")
 //    @CircuitBreaker(name = "detailsForCustomerSupport", fallbackMethod = "myCustomerDetailsFallback")
     @Retry(name = "retryForCustomerDetails", fallbackMethod = "myCustomerDetailsFallback")
-    public CustomerDetails myCustomerDetails(@RequestBody Customer customer) {
+    public CustomerDetails myCustomerDetails(@RequestHeader("tmx-correlation-id") String correlationId, @RequestBody Customer customer) {
         Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
-        List<Loans> loans = loansFeignClient.getLoansDetails(customer);
-        List<Cards> cards = cardsFeignClient.getCardDetails(customer);
+        List<Loans> loans = loansFeignClient.getLoansDetails(correlationId, customer);
+        List<Cards> cards = cardsFeignClient.getCardDetails(correlationId, customer);
 
         return new CustomerDetails(account, loans, cards);
     }
 
-    private CustomerDetails myCustomerDetailsFallback(Customer customer, Throwable t) {
+    private CustomerDetails myCustomerDetailsFallback(String correlationId, Customer customer, Throwable t) {
         Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
-        List<Loans> loans = loansFeignClient.getLoansDetails(customer);
+        List<Loans> loans = loansFeignClient.getLoansDetails(correlationId, customer);
 
         return new CustomerDetails(account, loans, List.of());
     }
