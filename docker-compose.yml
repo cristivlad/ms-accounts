@@ -1,6 +1,18 @@
 version: "3.8"
 
 services:
+  gateway:
+    image: cristiii/ms-gateway:latest
+    ports:
+      - "8072:8072"
+    networks:
+      - bank-network
+    depends_on:
+      - eureka
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka:8761/eureka
+
   eureka:
     image: cristiii/ms-eureka:latest
     ports:
