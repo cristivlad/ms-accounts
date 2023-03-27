@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +19,8 @@ import java.util.List;
 
 @RestController
 public class AccountsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccountsController.class);
 
     private final AccountRepository accountsRepository;
     private final AccountsServiceConfig accountsConfig;
@@ -57,10 +61,13 @@ public class AccountsController {
 //    @CircuitBreaker(name = "detailsForCustomerSupport", fallbackMethod = "myCustomerDetailsFallback")
     @Retry(name = "retryForCustomerDetails", fallbackMethod = "myCustomerDetailsFallback")
     public CustomerDetails myCustomerDetails(@RequestHeader("tmx-correlation-id") String correlationId, @RequestBody Customer customer) {
+        logger.info("myCustomerDetails started");
+
         Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
         List<Loans> loans = loansFeignClient.getLoansDetails(correlationId, customer);
         List<Cards> cards = cardsFeignClient.getCardDetails(correlationId, customer);
 
+        logger.info("myCustomerDetails ended");
         return new CustomerDetails(account, loans, cards);
     }
 
